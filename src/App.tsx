@@ -1,45 +1,94 @@
-import { useCallback, useEffect, useState } from '@lynx-js/react'
+import { useCallback, useEffect, useState } from "@lynx-js/react";
 
-import './App.css'
-import arrow from './assets/arrow.png'
-import lynxLogo from './assets/lynx-logo.png'
-import reactLynxLogo from './assets/react-logo.png'
+import "./App.css";
+
+interface Pokemon {
+  name: string;
+  url: string;
+  src?: string;
+  id?: number;
+}
+
+type PokemonFetchData = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Pokemon[];
+};
 
 export function App() {
-  const [alterLogo, setAlterLogo] = useState(false)
+  const [isFetching, setFetching] = useState(true);
+  const [pokemons, setPokemons] = useState<Pokemon[]>([]);
+  const [nextLink, setNextLink] = useState<string | null>(
+    "https://pokeapi.co/api/v2/pokemon?limit=40"
+  );
 
   useEffect(() => {
-    console.info('Hello, ReactLynx')
-  }, [])
+    fetchPokemon();
+  }, []);
 
-  const onTap = useCallback(() => {
-    'background only'
-    setAlterLogo(!alterLogo)
-  }, [alterLogo])
+  const fetchPokemon = async () => {
+    "background only";
+    try {
+      setFetching(true);
+      if (!nextLink) {
+        return;
+      }
+      const json = (await fetch(nextLink).then((res) =>
+        res.json()
+      )) as PokemonFetchData;
+
+      const newPokemons = json.results;
+
+      for await (let pokemon of newPokemons) {
+        const json = await fetch(pokemon.url).then((res) => res.json());
+        pokemon.src = json.sprites.front_default as string;
+        pokemon.id = json.id;
+      }
+
+      setNextLink(json.next);
+      setPokemons([...pokemons, ...newPokemons]);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setFetching(false);
+    }
+  };
 
   return (
-    <view>
-      <view className='Background' />
-      <view className='App'>
-        <view className='Banner'>
-          <view className='Logo' bindtap={onTap}>
-            {alterLogo
-              ? <image src={reactLynxLogo} className='Logo--react' />
-              : <image src={lynxLogo} className='Logo--lynx' />}
-          </view>
-          <text className='Title'>React</text>
-          <text className='Subtitle'>on Lynx</text>
+    <view style={{ width: "100vw", height: "100vh" }}>
+      <scroll-view
+        scroll-orientation="vertical"
+        style={{ padding: "20px", paddingTop: "40px", height: "100%" }}
+        bindscrolltolower={(e) => {
+          fetchPokemon();
+        }}
+      >
+        <view
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+          }}
+        >
+          {pokemons.map((pokemon) => (
+            <view
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                justifyItems: "center",
+                alignItems: "center",
+              }}
+            >
+              <image
+                style={{ width: "100px", height: "100px" }}
+                src={pokemon.src}
+              ></image>
+              <text>{pokemon.name}</text>
+              <text>id: {pokemon.id}</text>
+            </view>
+          ))}
         </view>
-        <view className='Content'>
-          <image src={arrow} className='Arrow' />
-          <text className='Description'>Tap the logo and have fun!</text>
-          <text className='Hint'>
-            Edit<text style={{ fontStyle: 'italic' }}>{' src/App.tsx '}</text>
-            to see updates!
-          </text>
-        </view>
-        <view style={{ flex: 1 }}></view>
-      </view>
+      </scroll-view>
     </view>
-  )
+  );
 }
