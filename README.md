@@ -20,6 +20,13 @@ Scan the QRCode in the terminal with your LynxExplorer App to see the result.
 
 ## On Windows:
 
+Seems like they've fixed this follow for windows so only follow the steps below if your versions are under:
+@lynx-js/react: v0.105.1
+@lynx-js/react-rsbuild-plugin: v0.9.1
+@lynx-js/rspeedy: v0.8.3
+
+If you are using the latest version of lynx on windows please follow the same steps as getting started on Mac
+
 1. Install the following npm package
 
 ```bash
